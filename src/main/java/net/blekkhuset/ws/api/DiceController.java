@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 
 @RestController
@@ -18,24 +19,22 @@ public class DiceController {
 
     @RequestMapping("/roll")
     public Dice dice(@RequestParam(name="r", required=false) String diceRoll) {
-        if(false){
-
-            throw new IllegalArgumentException("Only accepted dice sizes are d2, d4, d6, d8, d10, d12 and d20");
-        }
 
         if (diceRoll != null) {
-            String[] roll = diceRoll.split("d");
-            return new Dice(counter.getAndIncrement(), Integer.parseInt(roll[0]), Integer.parseInt(roll[1]), diceRoll);
+            Integer [] roll = Stream.of(diceRoll.split("d")).map(Integer::valueOf).toArray(Integer[]::new);
+            isValidRoll(roll);
+
+            return new Dice(counter.getAndIncrement(), roll[0], roll[1], diceRoll);
         } else {
             return new Dice(counter.getAndIncrement(), "1d6");
         }
     }
 
-    private boolean isValidRoll(String[] roll) {
+    private boolean isValidRoll(Integer[] roll) {
         if (roll.length != 2) {
-            return false;
-        } else if (!IntStream.of(allowedDice).anyMatch(x -> x == 4)) {
-            return false;
+            throw new IllegalArgumentException("Invalid input string.");
+        } else if (!IntStream.of(allowedDice).anyMatch(x -> x == roll[1])) {
+            throw new IllegalArgumentException("Only accepted dice sizes are d2, d4, d6, d8, d10, d12 and d20");
         } else {
             return true;
         }
